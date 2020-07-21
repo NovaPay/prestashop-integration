@@ -1,0 +1,69 @@
+.novapay-hidden {
+    display: none;
+}
+.novapay-form-error-list {
+    margin: 0;
+}
+@keyframes ldio {
+    0% { transform: rotate(0deg) }
+    50% { transform: rotate(180deg) }
+    100% { transform: rotate(360deg) }
+}
+.novapay-loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 9999;
+    text-align: center;
+}
+.novapay-loader .content {
+    position: relative;
+    z-index: 2;
+}
+.novapay-loader .spinner-eclipse {
+    width: 200px;
+    height: 200px;
+    display: inline-block;
+    overflow: hidden;
+    background: transparent;
+}
+.novapay-loader .spinner-eclipse .ldio {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform: translateZ(0) scale(1);
+    backface-visibility: hidden;
+    transform-origin: 0 0;
+}
+.novapay-loader .spinner-eclipse .ldio div {
+    position: absolute;
+    animation: ldio 1s linear infinite;
+    width: 160px;
+    height: 160px;
+    top: 20px;
+    left: 20px;
+    border-radius: 50%;
+    box-shadow: 0 4px 0 0 #f40020;
+    transform-origin: 80px 82px;
+    box-sizing: content-box;
+}
+.novapay-loader .logo {
+    position: absolute;
+    top: 67px;
+    left: 40px;
+}
+.novapay-loader .background {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: #fff;
+    opacity: .5;
+    z-index: 1;
+}

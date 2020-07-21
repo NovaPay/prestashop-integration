@@ -1,0 +1,46 @@
+<?php
+/**
+ * License
+ * @author mnemonic88uk
+ * @copyright 2020 mnemonic88uk
+ * @license https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
+ */
+
+class NovaPaySecurity
+{
+    /**
+     * @param string $message
+     * @param mixed $privateKey
+     * @return string|false
+     */
+    public function generateSignature($message, $privateKey)
+    {
+        if (!openssl_sign($message, $signature, $privateKey)) {
+            return false;
+        }
+        
+        return base64_encode($signature);
+    }
+
+    /**
+     * @param string $message
+     * @param string $signature
+     * @param mixed $publicKey
+     * @return bool
+     */
+    public function verifySignature($message, $signature, $publicKey)
+    {
+        if (!is_string($signature)) {
+            return false;
+        }
+        
+        $signature = base64_decode($signature, true);
+        if ($signature === false) {
+            return false;
+        }
+        
+        $result = openssl_verify($message, $signature, $publicKey);
+        
+        return $result === 1;
+    }
+}

@@ -1,0 +1,9 @@
+.novapay-hidden {
+    display: none;
+}
+#merchant_private_key {
+    min-height: 250px !important;
+}
+.novapay-capture-settings {
+    margin-bottom: 20px;
+}
