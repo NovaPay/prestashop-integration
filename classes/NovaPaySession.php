@@ -6,7 +6,7 @@
  * @license https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
  */
 
-class NovaPaySession extends ObjectModel implements NovaPayObjectInterface
+class NovaPaySession extends ObjectModel implements NovaPay\DataSourceInterface
 {
     /**
      * @var string|null
@@ -76,7 +76,7 @@ class NovaPaySession extends ObjectModel implements NovaPayObjectInterface
             'client_last_name' => array('type' => self::TYPE_STRING, 'size' => 20),
             'client_patronymic' => array('type' => self::TYPE_STRING, 'size' => 20),
             'client_phone' => array('type' => self::TYPE_STRING, 'required' => true, 'size' => 20),
-            'status' => array('type' => self::TYPE_STRING, 'required' => true, 'size' => 20),
+            'status' => array('type' => self::TYPE_STRING, 'required' => true, 'size' => 50),
         ),
     );
 

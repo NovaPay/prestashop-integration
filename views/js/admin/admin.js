@@ -12,9 +12,10 @@ $(document).ready(function() {
             var $formGroup = $input.closest('.form-group');
             var $controlLabel = $formGroup.find('.control-label');
         
-            if (!$controlLabel.hasClass('required'))
+            if (!$controlLabel.hasClass('required')) {
                 $formGroup.hide();
-    
+            }
+            
             $(document).on('click', '#show_merchant_private_key_input', () => {
                 $formGroup.show();
             });
@@ -22,9 +23,10 @@ $(document).ready(function() {
     }());
 
     $(document).on('click', '#novapay_use_custom_capture_amount', function() {
-        if ($(this).is(':checked'))
+        if ($(this).is(':checked')) {
             $('input[name="novapay_custom_capture_amount"]').parent().removeClass('novapay-hidden');
-        else
+        } else {
             $('input[name="novapay_custom_capture_amount"]').parent().addClass('novapay-hidden');
+        }
     });
 });

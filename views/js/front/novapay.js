@@ -5,73 +5,124 @@
  * @license https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
  */
 
-$(document).ready(function() {
-    var novaPay = {
-        loader: {
-            needToShow: false,
-            animationDuration: 500,
-            sensitivity: 0
-        },
+(function() {
+    var novaPayLoader = {
+        selector: '#novapay-loader',
+        needToShow: false,
+        animationDuration: 500,
+        sensitivity: 0
+    };
+    
+    $.novaPay = {
         showLoader: function() {
-            var $loader = $('#novapay-loader');
+            var $loader = $(novaPayLoader.selector);
             
             $loader.css({
                 display: 'flex',
                 opacity: 0
             });
     
-            this.loader.needToShow = true;
+            novaPayLoader.needToShow = true;
             
             setTimeout(() => {
-                if (this.loader.needToShow)
-                    $loader.animate({ opacity: 1 }, this.loader.animationDuration);
-            }, this.loader.sensitivity);
+                if (novaPayLoader.needToShow)
+                    $loader.animate({ opacity: 1 }, novaPayLoader.animationDuration);
+            }, novaPayLoader.sensitivity);
         },
-        hideLoader() {
-            this.loader.needToShow = false;
-            $('#novapay-loader').fadeOut(this.loader.animationDuration);
+        hideLoader: function() {
+            novaPayLoader.needToShow = false;
+            $(novaPayLoader.selector).fadeOut(novaPayLoader.animationDuration);
         },
-        enableConfirmationButton: function() {
-            $('#payment-confirmation').find('button[type="submit"]').attr('disabled', null);
-        },
-        displayErrors: function(errors) {
-            var $errorList = $('#novapay-form-error-list');
-
-            $errorList.html('');
-
-            for (var i = 0; i < errors.length; i++)
-                $errorList.append($('<li>' + errors[i] + '</li>'));
+        initCarrierExtraContent: function() {
+            var $information = $('#novapay-carrier-additional-information');
+            if (!$information.length) {
+                return;
+            }
+    
+            var $input = $('#client-city-description');
+            var $select = $('#client-warehouse-reference');
             
-            $('#novapay-form-errors').removeClass('novapay-hidden');
-            novaPay.hideLoader();
-            novaPay.enableConfirmationButton();
-        },
-        initialize: function() {
-            $('body').append(novapay_loader_html);
-            $(document).on('submit', '#novapay-form', function(e) {
-                e.preventDefault();
-                novaPay.showLoader();
-
-                var $form = $(this);
-
-                $.post($form.attr('action') + '?ajax=1', $form.serialize())
-                    .then(function(response) {
-                        response = JSON.parse(response);
-
-                        if (typeof response.error !== 'undefined')
-                            novaPay.displayErrors([response.error]);
-                        else if (typeof response.errors !== 'undefined')
-                            novaPay.displayErrors(response.errors);
-                        else
-                            document.location.href = response.url;
-                    })
-                    .fail(function() {
-                        novaPay.hideLoader();
-                        novaPay.enableConfirmationButton();
-                    });
+            $input.easyAutocomplete({
+                url: $information.data('get_cities_url'),
+                ajaxSettings: {
+                    method: 'POST',
+                    data: {}
+                },
+                list: {
+                    onChooseEvent: function() {
+                        $input.data('reference', $input.getSelectedItemData().reference);
+                        $.ajax($information.data('get_warehouses_url'), {
+                            type: 'POST',
+                            data: {city_reference: $input.data('reference')},
+                            cache: false,
+                            dataType: 'json',
+                            beforeSend: function(jqXHR, settings) {
+                                $.novaPay.showLoader();
+                            },
+                            success: function(data, textStatus, jqXHR) {
+                                for (var i = 0; i < data.length; i++) {
+                                    $select.append($(
+                                        '<option value="' + data[i].reference + '" data-number="' + data[i].number + '">' +
+                                            data[i].description +
+                                        '</option>'
+                                    ));
+                                }
+    
+                                $select.trigger('chosen:updated');
+                            },
+                            complete: function(jqXHR, textStatus) {
+                                $.novaPay.hideLoader();
+                            }
+                        });
+                    }
+                },
+                requestDelay: 400,
+                getValue: function(element) {
+                    return element.description;
+                },
+                preparePostData: function(data) {
+                    data.search_string = $input.val();
+    
+                    return data;
+                },
+            }).on('input', function(e) {
+                $input.data('reference', '');
+                $select.val('');
+                $select.find('option:not([disabled])').remove();
+                $select.trigger('chosen:updated');
+            }).on('focusout', function(e) {
+                if ($input.data('reference') === '') {
+                    $input.val('');
+                }
+            });
+    
+            $select.chosen({
+                disable_search_threshold: 5,
+                width: '100%'
+            }).on('change', function(e) {
+                $.ajax($information.data('set_warehouse_url'), {
+                    type: 'POST',
+                    data: {
+                        warehouse_reference: $select.val(),
+                        city_reference: $input.data('reference')
+                    },
+                    cache: false,
+                    dataType: 'json',
+                    beforeSend: function(jqXHR, settings) {
+                        $.novaPay.showLoader();
+                    },
+                    success: function(data, textStatus, jqXHR) {
+                        document.location.reload();
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        $.novaPay.hideLoader();
+                    }
+                });
             });
         }
     };
+}());
 
-    novaPay.initialize();
+$(document).ready(function() {
+    $('body').append(novapay_loader_html);
 });

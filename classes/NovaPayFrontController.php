@@ -39,6 +39,7 @@ class NovaPayFrontController extends ModuleFrontController
 
     /**
      * @param array $params
+     *
      * @return string
      */
     protected function getCheckoutUrl(array $params = array())
@@ -57,5 +58,29 @@ class NovaPayFrontController extends ModuleFrontController
     protected function redirectToCheckout(array $params = array())
     {
         Tools::redirect($this->getCheckoutUrl($params));
+    }
+
+    /**
+     * @param string $customerSecureKey
+     * @param array $params
+     *
+     * @return string
+     */
+    protected function getOrderConfirmationUrl($customerSecureKey, array $params = array())
+    {
+        return $this->context->link->getPageLink(
+            'order-confirmation',
+            true,
+            $this->context->language->id,
+            array_merge(
+                array(
+                    'id_cart' => $this->context->cart->id,
+                    'id_module' => $this->module->id,
+                    'id_order' => $this->module->currentOrder,
+                    'key' => $customerSecureKey,
+                ),
+                $params
+            )
+        );
     }
 }

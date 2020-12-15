@@ -25,17 +25,17 @@
             <div class="form-group row">
                 <div class="col-md-6">
                     <label for="client-first-name" class="form-control-label">{l s='First name' mod='novapay'}</label>
-                    <input type="text" id="client-first-name" class="form-control" name="client_first_name" value="{$client_first_name}" placeholder="{l s='First name (optional)' mod='novapay'}">
+                    <input type="text" id="client-first-name" class="form-control" name="client_first_name" value="{$client_first_name}" placeholder="{if $safe_deal}{l s='First name' mod='novapay'}{else}{l s='First name (optional)' mod='novapay'}{/if}">
                 </div>
                 <div class="col-md-6">
                     <label for="client-last-name" class="form-control-label">{l s='Last name' mod='novapay'}</label>
-                    <input type="text" id="client-last-name" class="form-control" name="client_last_name" value="{$client_last_name}" placeholder="{l s='Last name (optional)' mod='novapay'}">
+                    <input type="text" id="client-last-name" class="form-control" name="client_last_name" value="{$client_last_name}" placeholder="{if $safe_deal}{l s='Last name' mod='novapay'}{else}{l s='Last name (optional)' mod='novapay'}{/if}">
                 </div>
             </div>
             <div class="form-group row">
                 <div class="col-md-6">
                     <label for="client-patronymic" class="form-control-label">{l s='Patronymic' mod='novapay'}</label>
-                    <input type="text" id="client-patronymic" class="form-control" name="client_patronymic" value="" placeholder="{l s='Patronymic (optional)' mod='novapay'}">
+                    <input type="text" id="client-patronymic" class="form-control" name="client_patronymic" value="{$client_patronymic}" placeholder="{l s='Patronymic (optional)' mod='novapay'}">
                 </div>
                 <div class="col-md-6">
                     <label for="client-phone" class="form-control-label">{l s='Phone number' mod='novapay'}</label>
@@ -44,11 +44,11 @@
                 </div>
             </div>
         </div>
-        {if isset($session_creation_errors)}
+        {if isset($session_errors)}
             <div id="novapay-form-errors">
                 <div class="alert alert-danger" role="alert" data-alert="danger">
                     <ul id="novapay-form-error-list" class="novapay-form-error-list">
-                        {foreach $session_creation_errors as $error}
+                        {foreach $session_errors as $error}
                             <li>{$error}</li>
                         {/foreach}
                     </ul>

@@ -1,8 +1,35 @@
 .novapay-hidden {
     display: none;
 }
-.novapay-form-error-list {
-    margin: 0;
+.novapay-carrier-additional-information {
+    margin-bottom: 40px;
+}
+.novapay-carrier-additional-information .row {
+    margin-bottom: 15px;
+}
+.novapay-carrier-additional-information label {
+    padding-top: 10px;
+    font-size: 13px;
+}
+.novapay-carrier-additional-information .easy-autocomplete {
+    width: 100% !important;
+}
+.novapay-carrier-additional-information .easy-autocomplete input {
+    margin: 1px 0;
+    padding: 4px 20px 4px 5px;
+    width: 100%;
+    height: auto;
+    outline: 0;
+    border: 1px solid #aaa;
+    color: #444;
+    font-size: 13px;
+    font-family: sans-serif;
+    line-height: normal;
+    border-radius: 5px;
+    box-shadow: none;
+}
+.novapay-carrier-additional-information .easy-autocomplete-container ul li {
+    font-size: 13px;
 }
 @keyframes ldio {
     0% { transform: rotate(0deg) }

@@ -11,29 +11,48 @@ class NovaPayValidationModuleFrontController extends NovaPayFrontController
     /**
      * @param string $merchantId
      * @param string $sessionId
+     *
      * @return NovaPayPayment
      */
     protected function createPayment($merchantId, $sessionId)
     {
-        $collection = new NovaPayProductCollection();
+        $collection = new NovaPay\ProductCollection();
         
         foreach ($this->context->cart->getProducts() as $item) {
-            $product = new NovaPayProduct();
-            $product->setDescription($item['name']);
-            $product->setCount($item['cart_quantity']);
-            $product->setPrice($item['total_wt']);
-
-            $collection->addProduct($product);
+            $collection->addProduct(
+                (new NovaPay\Product())
+                    ->setDescription($item['name'])
+                    ->setCount($item['cart_quantity'])
+                    ->setPrice($item['total_wt'])
+            );
         }
         
         $payment = new NovaPayPayment();
         $payment->merchant_id = $merchantId;
         $payment->session_id = $sessionId;
         $payment->external_id = (int)$this->module->currentOrder;
-        $payment->amount = (float)$this->context->cart->getOrderTotal(true, Cart::BOTH);
-        $payment->products = $collection->getJson();
-        $payment->use_hold = $this->module->configuration->isTwoStepPayment();
+        
+        if ($this->module->isSafeDeal() &&
+            ($delivery = $this->module->getDeliveryObject())) {
+            $payment->amount = $delivery->getAmount();
+            $payment->use_hold = true;
+            $payment->delivery = $delivery->getJson(false);
+        } else {
+            $payment->amount = (float)$this->context->cart->getOrderTotal(true, Cart::BOTH);
+            $payment->use_hold = $this->module->configuration->isTwoStepPayment();
+            
+            if ($deliveryPrice = (float)$this->context->cart->getOrderTotal(true, Cart::ONLY_SHIPPING)) {
+                $collection->addProduct(
+                    (new NovaPay\Product())
+                        ->setDescription($this->module->l('Delivery', 'Validation'))
+                        ->setCount(1)
+                        ->setPrice($deliveryPrice)
+                );
+            }
+        }
 
+        $payment->products = $collection->getJson();
+        
         return $payment;
     }
 
@@ -72,16 +91,21 @@ class NovaPayValidationModuleFrontController extends NovaPayFrontController
         $merchantId = $this->module->configuration->getMerchantId();
         $payment = $this->createPayment($merchantId, $sessionId);
 
-        $client = new NovaPayClient(
+        $client = new NovaPay\Client(
             $merchantId,
             $this->module->configuration->getMerchantPrivateKey(),
+            $this->module->configuration->getMerchantPrivateKeyPassword(),
             $this->module->configuration->isSandboxMode()
         );
         
         $response = $client->createPayment($payment);
         if (!$response || $response->hasErrors() || !$response->getValue('url')) {
-            throw new PrestaShopException('Failed to create payment.');
+            $this->module->setOrderState(new Order((int)$this->module->currentOrder), _PS_OS_ERROR_);
+            Tools::redirect($this->getOrderConfirmationUrl($customer->secure_key));
         }
+
+        $payment->payment_id = $response->getValue('id');
+        $payment->delivery_price = (float)$response->getValue('delivery_price');
 
         if (!$payment->add()) {
             throw new PrestaShopException('Failed to save payment.');

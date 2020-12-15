@@ -6,7 +6,7 @@
  * @license https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
  */
 
-class NovaPayPayment extends ObjectModel implements NovaPayObjectInterface
+class NovaPayPayment extends ObjectModel implements NovaPay\DataSourceInterface
 {
     /**
      * @var string
@@ -17,6 +17,11 @@ class NovaPayPayment extends ObjectModel implements NovaPayObjectInterface
      * @var string
      */
     public $session_id = null;
+
+    /**
+     * @var string
+     */
+    public $payment_id = null;
 
     /**
      * @var string
@@ -37,6 +42,16 @@ class NovaPayPayment extends ObjectModel implements NovaPayObjectInterface
      * @var int
      */
     public $use_hold = 0;
+
+    /**
+     * @var string JSON
+     */
+    public $delivery = null;
+
+    /**
+     * @var float
+     */
+    public $delivery_price = null;
     
     /**
      * @var array
@@ -47,10 +62,13 @@ class NovaPayPayment extends ObjectModel implements NovaPayObjectInterface
         'fields' => array(
             'merchant_id' => array('type' => self::TYPE_STRING, 'required' => true, 'size' => 50),
             'session_id' => array('type' => self::TYPE_STRING, 'required' => true, 'size' => 50),
+            'payment_id' => array('type' => self::TYPE_STRING, 'size' => 50),
             'external_id' => array('type' => self::TYPE_STRING, 'required' => true, 'size' => 9),
             'amount' => array('type' => self::TYPE_FLOAT, 'required' => true),
             'products' => array('type' => self::TYPE_STRING, 'required' => true),
             'use_hold' => array('type' => self::TYPE_BOOL, 'required' => true),
+            'delivery' => array('type' => self::TYPE_STRING),
+            'delivery_price' => array('type' => self::TYPE_FLOAT),
         ),
     );
 
@@ -99,6 +117,10 @@ class NovaPayPayment extends ObjectModel implements NovaPayObjectInterface
 
         if ($this->use_hold) {
             $data['use_hold'] = $this->use_hold;
+        }
+
+        if ($this->delivery) {
+            $data['delivery'] = json_decode($this->delivery, true);
         }
 
         return $data;

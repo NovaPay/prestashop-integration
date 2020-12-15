@@ -9,11 +9,11 @@
         <div class="form-group row">
             <div class="col-md-6">
                 <label for="client-first-name" class="form-control-label">{l s='First name' mod='novapay'}</label>
-                <input type="text" id="client-first-name" class="form-control" name="client_first_name" value="{$client_first_name}" placeholder="{l s='First name (optional)' mod='novapay'}">
+                <input type="text" id="client-first-name" class="form-control" name="client_first_name" value="{$client_first_name}" placeholder="{if $safe_deal}{l s='First name' mod='novapay'}{else}{l s='First name (optional)' mod='novapay'}{/if}">
             </div>
             <div class="col-md-6">
                 <label for="client-last-name" class="form-control-label">{l s='Last name' mod='novapay'}</label>
-                <input type="text" id="client-last-name" class="form-control" name="client_last_name" value="{$client_last_name}" placeholder="{l s='Last name (optional)' mod='novapay'}">
+                <input type="text" id="client-last-name" class="form-control" name="client_last_name" value="{$client_last_name}" placeholder="{if $safe_deal}{l s='Last name' mod='novapay'}{else}{l s='Last name (optional)' mod='novapay'}{/if}">
             </div>
         </div>
         <div class="form-group row">

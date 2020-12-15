@@ -15,4 +15,8 @@
     <div class="alert alert-warning">
         {l s='Your order hasn\'t been validated yet, only created. There can be an issue with your payment or it can be captured later, please contact our customer service to have more details about it.' mod='novapay'}
     </div>
+{elseif $status === 'error'}
+    <div class="alert alert-danger">
+        {l s='Your order hasn\'t been validated. There is an issue with your payment, please contact our customer service to have more details about it.' mod='novapay'}
+    </div>
 {/if}

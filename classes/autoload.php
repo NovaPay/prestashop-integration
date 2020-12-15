@@ -7,7 +7,18 @@
  */
 
 spl_autoload_register(function ($className) {
-    if (file_exists($file = dirname(__FILE__).DIRECTORY_SEPARATOR.$className.'.php')) {
+    $file = dirname(__FILE__).DIRECTORY_SEPARATOR.str_replace('\\', DIRECTORY_SEPARATOR, $className).'.php';
+    if (!file_exists($file)) {
+        $file = dirname(__FILE__).DIRECTORY_SEPARATOR.str_replace(array('NovaPay\\PrestaShop\\', '\\'), array('', DIRECTORY_SEPARATOR), $className).'.php';
+        if (!file_exists($file)) {
+            $file = dirname(__FILE__).DIRECTORY_SEPARATOR.$className.'.php';
+            if (!file_exists($file)) {
+                $file = null;
+            }
+        }
+    }
+    
+    if ($file) {
         require_once($file);
     }
 });

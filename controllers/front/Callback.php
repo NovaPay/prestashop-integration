@@ -12,7 +12,7 @@ class NovaPayCallbackModuleFrontController extends NovaPayFrontController
     {
         $message = Tools::file_get_contents('php://input');
         
-        $isValidSignature = (new NovaPaySecurity())->verifySignature(
+        $isValidSignature = (new NovaPay\Security())->verifySignature(
             $message,
             $_SERVER['HTTP_X_SIGN'],
             $this->module->configuration->getServerPublicKey()

@@ -17,33 +17,42 @@ class NovaPaySessionModuleFrontController extends NovaPayFrontController
      * @var bool
      */
     public $display_column_left = false;
-    
+
     /**
-     * @param string $customerSecureKey
-     * @param array $params
-     * @return string
+     * @return array
      */
-    protected function getOrderConfirmationUrl($customerSecureKey, array $params = array())
+    protected function getSafeDealSessionValidationErrors()
     {
-        return $this->context->link->getPageLink(
-            'order-confirmation',
-            true,
-            $this->context->language->id,
-            array_merge(
-                array(
-                    'id_cart' => $this->context->cart->id,
-                    'id_module' => $this->module->id,
-                    'id_order' => $this->module->currentOrder,
-                    'key' => $customerSecureKey,
-                ),
-                $params
-            )
-        );
+        $errors = array();
+        $pattern = '/^[А-Яа-яҐґЄєІіЇїЁё\'\- ]+$/u';
+        $allowedCharacters = $this->module->l('Allowed characters: letters of the Ukrainian and Russian alphabets, as well as space, hyphen and apostrophe.', 'Session');
+
+        $firstName = trim(Tools::getValue('client_first_name', ''));
+        if (!$firstName) {
+            $errors[] = $this->module->l('First name is required.', 'Session');
+        } elseif (!preg_match($pattern, $firstName)) {
+            $errors[] = $this->module->l('First name contains invalid characters.', 'Session').' '.$allowedCharacters;
+        }
+
+        $lastName = trim(Tools::getValue('client_last_name', ''));
+        if (!$lastName) {
+            $errors[] = $this->module->l('Last name is required.', 'Session');
+        } elseif (!preg_match($pattern, $lastName)) {
+            $errors[] = $this->module->l('Last name contains invalid characters.', 'Session').' '.$allowedCharacters;
+        }
+
+        $patronymic = trim(Tools::getValue('client_patronymic', ''));
+        if ($patronymic && !preg_match($pattern, $patronymic)) {
+            $errors[] = $this->module->l('Patronymic contains invalid characters.', 'Session').' '.$allowedCharacters;
+        }
+        
+        return $errors;
     }
 
     /**
      * @param string $merchantId
      * @param string $customerSecureKey
+     *
      * @return NovaPaySession
      */
     protected function createSession($merchantId, $customerSecureKey)
@@ -90,24 +99,25 @@ class NovaPaySessionModuleFrontController extends NovaPayFrontController
     }
 
     /**
-     * @param NovaPayResponse $response
+     * @param NovaPay\Response $response
+     *
      * @return array
      */
-    protected function getSessionCreationErrors(NovaPayResponse $response)
+    protected function getSessionCreationErrors(NovaPay\Response $response)
     {
         $errors = array();
 
         foreach ($response->getErrors() as $error) {
             if ($error->getCode() == '.client_first_name') {
-                $errors['.client_first_name'] = $this->module->l('Invalid first name.');
+                $errors['.client_first_name'] = $this->module->l('Invalid first name.', 'Session');
             } elseif ($error->getCode() == '.client_last_name') {
-                $errors['.client_last_name'] = $this->module->l('Invalid last name.');
+                $errors['.client_last_name'] = $this->module->l('Invalid last name.', 'Session');
             } elseif ($error->getCode() == '.client_patronymic') {
-                $errors['.client_patronymic'] = $this->module->l('Invalid patronymic.');
+                $errors['.client_patronymic'] = $this->module->l('Invalid patronymic.', 'Session');
             } elseif ($error->getCode() == '.client_phone') {
-                $errors['.client_phone'] = $this->module->l('Invalid phone number.');
+                $errors['.client_phone'] = $this->module->l('Invalid phone number.', 'Session');
             } else {
-                return array($this->module->l('Failed to create session.'));
+                return array($this->module->l('Failed to create session.', 'Session'));
             }
         }
 
@@ -129,12 +139,22 @@ class NovaPaySessionModuleFrontController extends NovaPayFrontController
             if (!Validate::isLoadedObject($customer)) {
                 $this->redirectToCheckout(array('step' => 1));
             }
+
+            if ($this->module->isSafeDeal() &&
+                ($errors = $this->getSafeDealSessionValidationErrors())) {
+                $this->context->smarty->assign(array(
+                    'session_errors' => $errors
+                ));
+
+                return;
+            }
             
             $merchantId = $this->module->configuration->getMerchantId();
 
-            $client = new NovaPayClient(
+            $client = new NovaPay\Client(
                 $merchantId,
                 $this->module->configuration->getMerchantPrivateKey(),
+                $this->module->configuration->getMerchantPrivateKeyPassword(),
                 $this->module->configuration->isSandboxMode()
             );
 
@@ -150,7 +170,7 @@ class NovaPaySessionModuleFrontController extends NovaPayFrontController
             
             if ($response->hasErrors()) {
                 $this->context->smarty->assign(array(
-                    'session_creation_errors' => $this->getSessionCreationErrors($response)
+                    'session_errors' => $this->getSessionCreationErrors($response)
                 ));
 
                 return;
@@ -183,17 +203,19 @@ class NovaPaySessionModuleFrontController extends NovaPayFrontController
                 $this->context->cart->id_address_invoice,
                 $this->context->language->id
             );
-    
+
             $this->context->smarty->assign(array(
                 'nb_products' => $this->context->cart->nbProducts(),
-                'client_first_name' => $invoiceAddress->firstname,
-                'client_last_name' => $invoiceAddress->lastname,
-                'client_phone' => $invoiceAddress->phone ? $invoiceAddress->phone :
-                    $invoiceAddress->phone_mobile,
+                'client_first_name' => Tools::getValue('client_first_name', $invoiceAddress->firstname),
+                'client_last_name' => Tools::getValue('client_last_name', $invoiceAddress->lastname),
+                'client_patronymic' => Tools::getValue('client_patronymic', ''),
+                'client_phone' => Tools::getValue('client_phone', $invoiceAddress->phone ? $invoiceAddress->phone :
+                    $invoiceAddress->phone_mobile),
                 'novapay_form_action' => $this->context->link->getModuleLink(
                     $this->module->name,
                     'Session'
                 ),
+                'safe_deal' => $this->module->isSafeDeal(),
             ));
     
             $this->setTemplate('session.tpl');
@@ -204,13 +226,13 @@ class NovaPaySessionModuleFrontController extends NovaPayFrontController
     {
         if (!$this->checkIfContextIsValid()) {
             $this->displayAjaxError(
-                $this->module->l('The context is not valid.')
+                $this->module->l('The context is not valid.', 'Session')
             );
         }
         
         if (!$this->checkIfPaymentOptionIsAvailable()) {
             $this->displayAjaxError(
-                $this->module->l('This payment method is not available.')
+                $this->module->l('This payment method is not available.', 'Session')
             );
         }
 
@@ -221,11 +243,19 @@ class NovaPaySessionModuleFrontController extends NovaPayFrontController
             ));
         }
 
+        if ($this->module->isSafeDeal() &&
+            ($errors = $this->getSafeDealSessionValidationErrors())) {
+            $this->displayAjaxData(array(
+                'errors' => $errors
+            ));
+        }
+
         $merchantId = $this->module->configuration->getMerchantId();
 
-        $client = new NovaPayClient(
+        $client = new NovaPay\Client(
             $merchantId,
             $this->module->configuration->getMerchantPrivateKey(),
+            $this->module->configuration->getMerchantPrivateKeyPassword(),
             $this->module->configuration->isSandboxMode()
         );
 
@@ -237,7 +267,7 @@ class NovaPaySessionModuleFrontController extends NovaPayFrontController
         $response = $client->createSession($session);
         if (!$response) {
             $this->displayAjaxError(
-                $this->module->l('Invalid response.')
+                $this->module->l('Invalid response.', 'Session')
             );
         }
         
@@ -249,7 +279,7 @@ class NovaPaySessionModuleFrontController extends NovaPayFrontController
         
         if (!$response->getValue('id')) {
             $this->displayAjaxError(
-                $this->module->l('Invalid session ID.')
+                $this->module->l('Invalid session ID.', 'Session')
             );
         }
         
@@ -257,7 +287,7 @@ class NovaPaySessionModuleFrontController extends NovaPayFrontController
 
         if (!$session->add()) {
             $this->displayAjaxError(
-                $this->module->l('Failed to save session.')
+                $this->module->l('Failed to save session.', 'Session')
             );
         }
         
